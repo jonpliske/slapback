@@ -23,7 +23,7 @@
     "name": "Jon Pliske",
     "email": "jonpliske@gmail.com"
   },
-  "license": "BSD",
+  "license": "MIT",
   "readmeFilename": "README.md",
   "devDependencies": {
     "tape": "~0.3.3"
