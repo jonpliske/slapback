@@ -6,3 +6,25 @@
 
 Fork a worker that will echo back all inter-process communication it
 recieves from the master process, allowing you to perform validation.
+
+
+```javascript
+// You can use the `validatesMessage()` helper to make assertions about
+// messages being sent to the worker.
+worker.validateMessage('secrets', function(msg) {
+  assert.deepEqual(unwrappedData, msg, 'passes unwrapped data to validator fn');
+});
+
+
+// You can also use the worker to simply echo messages back
+slapback(function(worker) {
+  assert(worker, 'worker is not null');
+
+  worker.on('message', function(msg) {
+    t.deepEqual(wrappedData, msg, 'workers sends back wrapped data');
+  });
+
+  worker.send(unwrappedData);
+});
+
+```
