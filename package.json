@@ -1,6 +1,6 @@
 {
   "name": "slapback",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Fork a worker that will echo back all inter-process communication it recieves from the master process, allowing you to perform validation.",
   "main": "slapback.js",
   "scripts": {
