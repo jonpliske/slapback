@@ -1,9 +1,7 @@
-var cp = require('child_process');
+var cluster = require('cluster');
 
 // We are in a child process acting like a cluster worker
-if (process.send) {
-
-  process.send('forked');
+if (cluster.isWorker) {
 
   process.on('message', function(msg) {
     if (process.env.DEBUG) console.log('[MASTER -> WORKER]', msg);
@@ -11,43 +9,45 @@ if (process.send) {
     process.send({message: '__echo', data: msg});
   });
 
-  process.send('online');
-
 // We are in the main process acting like the cluster master
 } else {
 
-  module.exports = function(cb) {
+  module.exports = slapback
 
-    var worker = cp.fork(__filename);
+  function slapback (cb) {
 
-    worker.validateMessage = function(messageType, validator) {
-      var messageHandler = function(msg) {
-        if (!(msg.message === '__echo')) return;
+    cluster.setupMaster({exec: __filename});
+    worker = cluster.fork();
 
-        var msg = msg.data;
+    cluster.once('fork', function(worker) {
+      if (process.env.DEBUG) console.log('[WORKER] forked #', worker.id);
 
-        if (msg.message === messageType) {
-          validator(msg);
+      worker.validateMessage = function(messageType, validator) {
+        var messageHandler = function(msg) {
+          if (!(msg.message === '__echo')) return;
+
+          var msg = msg.data;
+
+          if (msg.message === messageType) {
+            validator(msg);
+
+            worker.disconnect();
+          }
         };
 
-        this.kill();
+        worker.on('message', messageHandler);
       };
 
-      this.on('message', messageHandler);
-    };
+      cb(worker);
+    });
 
-    worker.on('exit', function() {
-      if (process.env.DEBUG) console.log('[WORKER] exit');
+    worker.on('exit', function(code, signal) {
+      if (process.env.DEBUG) console.log('[WORKER] exit #', worker.id, code, signal);
     })
 
     worker.on('message', function(msg) {
       if (process.env.DEBUG) console.log('[WORKER -> MASTER]', msg);
-
-      if (msg === 'online') {
-        cb(worker);
-      }
     });
-
   };
+}
 
-};
